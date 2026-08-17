@@ -1,0 +1,52 @@
+name: Sync AI Studio Agent Repo
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout destination repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone AI Studio source repository
+        run: |
+          git clone --depth 1 \
+            https://github.com/onlinefirst2026-beep/Online1stJOR-NG.git \
+            /tmp/agent-source
+
+      - name: Sync source files
+        run: |
+          rsync -av --delete \
+            --exclude ".git" \
+            --exclude ".github/workflows/sync-agent.yml" \
+            /tmp/agent-source/ ./
+
+      - name: Restore sync workflow
+        run: |
+          git checkout HEAD -- .github/workflows/sync-agent.yml
+
+      - name: Commit updates
+        run: |
+          git config user.name "OnlineFirst Sync Bot"
+          git config user.email "onlinefirst-sync@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes from AI Studio."
+            exit 0
+          fi
+
+          git commit -m "Sync latest AI Studio changes"
+          git push origin main
