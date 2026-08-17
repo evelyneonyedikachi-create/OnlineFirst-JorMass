@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Prevent a scheduled sync and a manual sync from running at the same time
+concurrency:
+  group: onlinefirst-jormass-agent-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -18,14 +23,27 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
+
+      - name: Update destination to latest main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Preserve sync workflow
+        run: |
+          mkdir -p /tmp/onlinefirst-workflow
+          cp .github/workflows/sync-agent.yml /tmp/onlinefirst-workflow/sync-agent.yml
 
       - name: Clone AI Studio source repository
         run: |
+          rm -rf /tmp/agent-source
+
           git clone --depth 1 \
             https://github.com/onlinefirst2026-beep/Online1stJOR-NG.git \
             /tmp/agent-source
 
-      - name: Sync source files
+      - name: Sync AI Studio files
         run: |
           rsync -av --delete \
             --exclude ".git" \
@@ -34,9 +52,11 @@ jobs:
 
       - name: Restore sync workflow
         run: |
-          git checkout HEAD -- .github/workflows/sync-agent.yml
+          mkdir -p .github/workflows
+          cp /tmp/onlinefirst-workflow/sync-agent.yml \
+            .github/workflows/sync-agent.yml
 
-      - name: Commit updates
+      - name: Commit and push updates
         run: |
           git config user.name "OnlineFirst Sync Bot"
           git config user.email "onlinefirst-sync@users.noreply.github.com"
@@ -44,12 +64,9 @@ jobs:
           git add -A
 
           if git diff --cached --quiet; then
-            echo "No changes from AI Studio."
+            echo "No new AI Studio changes to sync."
             exit 0
           fi
 
           git commit -m "Sync latest AI Studio changes"
-
-          git pull --rebase origin main
-
           git push origin main
