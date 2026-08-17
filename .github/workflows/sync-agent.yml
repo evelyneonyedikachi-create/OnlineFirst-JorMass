@@ -49,4 +49,7 @@ jobs:
           fi
 
           git commit -m "Sync latest AI Studio changes"
+
+          git pull --rebase origin main
+
           git push origin main
