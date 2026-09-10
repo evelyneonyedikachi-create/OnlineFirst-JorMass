@@ -25,8 +25,17 @@ import { Demo3Home } from './components/Demos/Demo3DigitalLibrary/Demo3Home';
 import { Demo3Pages } from './components/Demos/Demo3DigitalLibrary/Demo3Pages';
 
 import { SiteMode, ThemeVariant, JournalPage, Article } from './types';
+import { isProposalClosed } from './lib/proposalConfig';
+import { ProposalExpiredPage } from './components/Holding/ProposalExpiredPage';
 
 export default function App() {
+  // Check if proposal review period is closed (locks all public routes to holding page)
+  const proposalClosed = isProposalClosed();
+
+  if (proposalClosed) {
+    return <ProposalExpiredPage />;
+  }
+
   const store = useJournalStore();
 
   // Active Modals State
