@@ -24,7 +24,7 @@ const getEnvString = (key: string, defaultValue: string = ''): string => {
  * Can be overridden at deployment time with the VITE_PROPOSAL_STATUS environment variable,
  * or changed directly here to reactivate the proposal in one step.
  */
-export const DEFAULT_PROPOSAL_STATUS: ProposalStatus = 'closed';
+export const DEFAULT_PROPOSAL_STATUS: ProposalStatus = 'active';
 
 export const PROPOSAL_STATUS: ProposalStatus =
   (getEnvString('VITE_PROPOSAL_STATUS', DEFAULT_PROPOSAL_STATUS).toLowerCase() === 'active')
